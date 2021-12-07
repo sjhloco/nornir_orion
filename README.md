@@ -55,7 +55,7 @@ npm:
 **Groups:** Nornir groups are created using the *groups* list of dictionaries with group membership based around the device attribute *MachineTypes*.
 
 - *Group*: Name of the group
-- *type*: Host data dictionary to represent the device type for this group (router, switch, etc), it replaces MachineType
+- *type*: Host data dict to represent the device type for this group (router, switch, etc), replaces MachineType
 - *filter*: A list of upto two filter objects (and logic) to match against SELECT MachineTypes
 - *scrapli*: Optional 3rd party connection driver added to connection_options (platform)
 - *netmiko*: Optional  3rd party connection driver added to connection_options (platform)
@@ -162,7 +162,7 @@ All hosts in groups *ios* or *iosxe* that have *WAN* in their name\
 All hosts (including host_vars) in group *ios* running version *16.9.6* at locations *DC* or *AZ*\
 `python example_basic.py -sd -g iosxe -v "16.9.6" -l DC AZ`
 
-!!!!! ADD Video !!!!!
+![run_example_basic](https://user-images.githubusercontent.com/33333983/145107911-951922f0-3c5c-4cb7-a32b-046c74d215df.gif)
 
 ### Adding additional flags to the Inventory
 
