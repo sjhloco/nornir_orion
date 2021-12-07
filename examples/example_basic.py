@@ -14,7 +14,7 @@ The optional runtime flags for the script:
 -t:Filter based on device type (firewall, router, dc_switch, switch, wifi_controller)
 -v: Filter based on OS version (Cisco only)
 -s: Prints all the hosts within the filtered inventory
-sd: Prints all the hosts within the filtered inventory including their host_vars
+-sd: Prints all the hosts within the filtered inventory including their host_vars
 """
 
 from nornir_orion import orion_inv

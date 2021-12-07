@@ -1,51 +1,50 @@
 
 # Orion NPM Nornir Inventory
 
-A Nornir inventory built from Orion NPM using ***orionsdk***. The inventory and accompanying script will do the following:
+Uses the ***orionsdk*** python package to build a nornir inventory from Solarwinds Orion NPM.
 
-- Gathers NPM devices filtering the devices based on SQL query logic (*FROM* and *WHERE*)
+- Gathers NPM devices filtering them based on SQL query logic (*FROM* and *WHERE*)
 - NPM device attributes (*SELECT*) are stored in the Nornir data dictionary as host_vars
-- Builds device type groups based on *MachineType* which defines the Nornir *platform* (*connection_options*)
-- Customisable SQL query (*WHERE*) and device attribute collection (*SELECT*)
-- Filter the Nornir inventory at runtime using flags
+- Based on NPM *MachineType* creates OS-type nornir *groups* with their associated nornir *platform* (*connection_options*)
+- Provides customisable SQL query (*WHERE*) and device attribute collection (*SELECT*)
+- Filter the Nornir inventory using runtime flags (arguments)
 
 ## SolarWinds Query Language (SWQL)
 
-[SWQL](https://user-images.githubusercontent.com/33333983/119037187-8eb88100-b9a9-11eb-9417-106d21eb7591.gif) is a proprietary, read-only subset of SQL which is used by the inventory plugin to query the SolarWinds database for specific network information. It uses standard SQL query logic of *SELECT … FROM … WHERE …* with SELECT and WHERE set in the default values (*npm_select* and *npm_where*) and FROM being an arbitrary value.
+[SWQL](https://user-images.githubusercontent.com/33333983/119037187-8eb88100-b9a9-11eb-9417-106d21eb7591.gif) is a proprietary, read-only subset of SQL which is used by the inventory plugin to query the SolarWinds database for device information. It uses standard SQL query logic of *SELECT … FROM … WHERE …* with *SELECT* and *WHERE* set in the default values (*npm.select* and *npm.where*) and FROM being an arbitrary value.
 
-- **FROM:** Set by default to *'Orion.Nodes'* so that SELECT *'Caption'*, *'IPAddress'* and *'MachineType'* are always usable
-- **SELECT:** An optional list of the device attributes to pull from Orion which are added as host data dictionaries. *Caption*, *IPAddress* and *MachineType* are explicit options set in the background with *Caption* used as the Nornir inventory *host*, *IPAddress* the *hostname* and *MachineType* defining group membership. Can use any pre-defined [schema](http://solarwinds.github.io/OrionSDK/schema/index.html) property or custom properties (must start with *Nodes.CustomProperties*).
-- **WHERE:** A mandatory string used to filter the Nodes returned by the query. Although a string can be multiple conditional elements such as
-*"Vendor = 'Cisco' and Nodes.Status = 1"* to match Cisco objects that are up.
+- **FROM:** Set to *'Orion.Nodes'* so that SELECT attributes *'Caption'*, *'IPAddress'* and *'MachineType'* are always usable
+- **SELECT:** An optional list of the device attributes to pull from Orion and add as host data dictionaries. *Caption*, *IPAddress* and *MachineType* are explicit options set in the background with *Caption* used as the nornir inventory host, *IPAddress* the hostname and *MachineType* defining group membership. Can use any pre-defined [schema](http://solarwinds.github.io/OrionSDK/schema/index.html) property or custom properties (must start with *Nodes.CustomProperties*)
+- **WHERE:** A mandatory string used to filter the Nodes returned by the query. The string can contain multiple conditional elements such as *"Vendor = 'Cisco' and Nodes.Status = 1"* which would match all Cisco objects that are up
 
 ## Inventory settings
 
-The inventory settings hold the Orion and network device credentials as well as ASQL parameters used to filter to the orion database. The file structure is split into three parent dictionries with the settgins for each element underneath it.
+The inventory settings comprises of three parent dictionaries (*npm*, *groups*, *device*) holding the Orion and network device credentials as well as the SWQL parameters used to filter the orion database.
 
 | Parent | Variable | Type | Description |
-| npm | -------- | -----| ----------- |
+| --- | -------- | -----| ----------- |
 | npm | server | `string` | IP or hostname of the Orion NPM server will gather devices from
-| npm | user | `string` | Username for orion, can be overriden at runtime with `-nu'
-| npm | pword | 'string' | Optional password for orion
+| npm | user | `string` | Username for orion, can be overridden at runtime with '-nu'
+| npm | pword | `string` | Optional password for orion, if not set prompts at runtime
 | npm | ssl_verify | `boolean` | Disables CA certificate validation warnings
 | npm | select | `list` | Device (SWQL) attributes gathered and added to the nornir inventory (can be empty list)
 | npm | where | `string` | Filter (SWQL) to define which Orion nodes to gather attributes from (such as vendor and/or status)
 | groups | n/a | `list` | List of groups and filters based on *'MachineType'* to decide the group membership (can be empty list)
 | device | user | `string` | Nornir inventory device username used when connecting to them, is same across all
-| device | pword | `string` | Optional password for all devices
+| device | pword | `string` | Optional password for all devices, if not set prompts at runtime
 
-The passwords are only there for testing, at runtime if not set it will prompt for passwords, this is the preferable method.
+The preferable password method is to enter them at runtime when prompted, however they can be set manually for testing which will automatically disable the password prompts
 
-The default inventory settings files (*inv_settings.yml*) has the following SWQL values and resulting logic.
+The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
 
-**Filter (WHERE):** Gather device attributes for Cisco or Checkpoint devices (*Vendor*) that are up (*1)*
+**Filter (WHERE):** Gather device attributes for Cisco and Checkpoint devices (*Vendor*) that are up (*1*).
 
 ```yaml
 npm:
   where: (Vendor = 'Cisco' or Vendor ='Check Point Software Technologies Ltd') and Nodes.Status = 1
 ```
 
-**Attributes (SELECT):** Device attributes that will be gathered for each device. This will gather the default of *'Caption'*, *'IPAddress'* and *'MachineType'* (explict, dont need specifying) as well as *IOSversion* (Checkpoint has none) and custom attributes *Infra_Location* and *Infra_Logical_Location*.
+**Attributes (SELECT):** From each device it will gather the explicit attributes of *Caption*, *IPAddress* and *MachineType* (don't need specifying), *IOSversion* (n/a for Checkpoint) as well as custom attributes *Infra_Location* and *Infra_Logical_Location*.
 
 ```yaml
 npm:
@@ -58,13 +57,13 @@ npm:
 **Groups:** Nornir groups are created using the *groups* list of dictionaries with group membership based around the device attribute *MachineTypes*.
 
 -Group: Name of the group
--type: Host data dict to represent the device type for this group (router, switch, etc), it replaces MachineType
--filter: A list of upto two filter objects (and logic) to match against SELECT 'MachineTypes'
--scrapli: Optional 3rd connection driver added to connection_options (platform)
--netmiko: Optional  3rd connection driver added to connection_options (platform)
--napalm: Optional  3rd connection driver added to connection_options (platform)
+-type: Host data dictionary to represent the device type for this group (router, switch, etc), it replaces MachineType
+-filter: A list of upto two filter objects (*and* logic) to match against *SELECT MachineTypes*
+-scrapli: Optional 3rd party connection driver added to connection_options (platform)
+-netmiko: Optional  3rd party connection driver added to connection_options (platform)
+-napalm: Optional  3rd party connection driver added to connection_options (platform)
 
-This will create groups for *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc* and *checkpoint* with a custom *type* host_var and the *platform* set to  define the 3rd party connection driver.
+This will create groups for *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc* and *checkpoint* with a custom *type* host_var and the *platform* set for any connection drivers defined.
 
 ```yaml
 groups:
