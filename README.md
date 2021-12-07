@@ -4,38 +4,36 @@
 Uses the ***orionsdk*** python package to build a nornir inventory from Solarwinds Orion NPM.
 
 - Gathers NPM devices filtering them based on SQL query logic (*FROM* and *WHERE*)
-- NPM device attributes (*SELECT*) are stored in the Nornir data dictionary as host_vars
-- Based on NPM *MachineType* creates OS-type nornir *groups* with their associated nornir *platform* (*connection_options*)
+- NPM device attributes (*SELECT*) are stored in the nornir data dictionary as host_vars
+- Based on NPM *MachineType* creates OS-type nornir *groups* with their associated nornir *platform*
 - Provides customisable SQL query (*WHERE*) and device attribute collection (*SELECT*)
-- Filter the Nornir inventory using runtime flags (arguments)
+- The nornir inventory can be filtered at runtime using flags (arguments)
 
 ## SolarWinds Query Language (SWQL)
 
-[SWQL](https://user-images.githubusercontent.com/33333983/119037187-8eb88100-b9a9-11eb-9417-106d21eb7591.gif) is a proprietary, read-only subset of SQL which is used by the inventory plugin to query the SolarWinds database for device information. It uses standard SQL query logic of *SELECT … FROM … WHERE …* with *SELECT* and *WHERE* set in the default values (*npm.select* and *npm.where*) and FROM being an arbitrary value.
+[SWQL](https://user-images.githubusercontent.com/33333983/119037187-8eb88100-b9a9-11eb-9417-106d21eb7591.gif) is a proprietary, read-only subset of SQL used by the inventory plugin to query the SolarWinds database for device information. It uses standard SQL query logic of ***SELECT … FROM … WHERE …*** with *SELECT* and *WHERE* set in the inventory settings (*npm.select* and *npm.where*) and *FROM* being an arbitrary value.
 
-- **FROM:** Set to *'Orion.Nodes'* so that SELECT attributes *'Caption'*, *'IPAddress'* and *'MachineType'* are always usable
-- **SELECT:** An optional list of the device attributes to pull from Orion and add as host data dictionaries. *Caption*, *IPAddress* and *MachineType* are explicit options set in the background with *Caption* used as the nornir inventory host, *IPAddress* the hostname and *MachineType* defining group membership. Can use any pre-defined [schema](http://solarwinds.github.io/OrionSDK/schema/index.html) property or custom properties (must start with *Nodes.CustomProperties*)
-- **WHERE:** A mandatory string used to filter the Nodes returned by the query. The string can contain multiple conditional elements such as *"Vendor = 'Cisco' and Nodes.Status = 1"* which would match all Cisco objects that are up
+- **FROM:** Set to *'Orion.Nodes'* so SELECT attributes *'Caption'*, *'IPAddress'* and *'MachineType'* are always usable
+- **SELECT:** An optional list of the device attributes to pull from Orion and add as host data dictionaries. *Caption*, *IPAddress* and *MachineType* are explicit options set in the background with *Caption* used as the nornir inventory host, *IPAddress* the hostname and *MachineType* defining group membership. Can SELECT based any pre-defined [schema](http://solarwinds.github.io/OrionSDK/schema/index.html) or custom property (must start with *Nodes.CustomProperties*)
+- **WHERE:** A mandatory string used to filter the Nodes returned by the query. The string can contain multiple conditional elements, for example *"Vendor = 'Cisco' and Nodes.Status = 1"* matches all up Cisco devices
 
 ## Inventory settings
 
-The inventory settings comprises of three parent dictionaries (*npm*, *groups*, *device*) holding the Orion and network device credentials as well as the SWQL parameters used to filter the orion database.
+The inventory settings comprises of three parent dictionaries (***npm***, ***groups***, ***device***) holding the Orion and network device credentials as well as the SWQL parameters that filter the database.
 
 | Parent | Variable | Type | Description |
 | --- | -------- | -----| ----------- |
-| npm | server | `string` | IP or hostname of the Orion NPM server will gather devices from
-| npm | user | `string` | Username for orion, can be overridden at runtime with '-nu'
-| npm | pword | `string` | Optional password for orion, if not set prompts at runtime
+| npm | server | `string` | IP or hostname of the Orion NPM server devices are gathered from
+| npm | user | `string` | Username for orion, can be overridden at runtime using `-nu`
+| npm | pword | `string` | Optional Orion password, if not set is prompted for at runtime
 | npm | ssl_verify | `boolean` | Disables CA certificate validation warnings
-| npm | select | `list` | Device (SWQL) attributes gathered and added to the nornir inventory (can be empty list)
-| npm | where | `string` | Filter (SWQL) to define which Orion nodes to gather attributes from (such as vendor and/or status)
-| groups | n/a | `list` | List of groups and filters based on *'MachineType'* to decide the group membership (can be empty list)
-| device | user | `string` | Nornir inventory device username used when connecting to them, is same across all
-| device | pword | `string` | Optional password for all devices, if not set prompts at runtime
+| npm | select | `list` | Device attributes added to the nornir inventory (can be empty list)
+| npm | where | `string` | Filter to define which Orion nodes to gather attributes from
+| groups | n/a | `list` | List of groups and filters that decide the group membership
+| device | user | `string` | Nornir inventory device usernames, same across all (runtime `-du`)
+| device | pword | `string` | Optional password for all devices, if not set prompted for at runtime
 
-The preferable password method is to enter them at runtime when prompted, however they can be set manually for testing which will automatically disable the password prompts
-
-The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
+The preferable password method is to enter them at runtime when prompted, if set manually password prompts are disabled. The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
 
 **Filter (WHERE):** Gather device attributes for Cisco and Checkpoint devices (*Vendor*) that are up (*1*).
 
@@ -44,7 +42,7 @@ npm:
   where: (Vendor = 'Cisco' or Vendor ='Check Point Software Technologies Ltd') and Nodes.Status = 1
 ```
 
-**Attributes (SELECT):** From each device it will gather the explicit attributes of *Caption*, *IPAddress* and *MachineType* (don't need specifying), *IOSversion* (n/a for Checkpoint) as well as custom attributes *Infra_Location* and *Infra_Logical_Location*.
+**Attributes (SELECT):** From each device gather the explicit attributes of *Caption*, *IPAddress* and *MachineType* (don't need specifying) as well as *IOSversion* (Cisco only) and custom attributes *Infra_Location* and *Infra_Logical_Location*.
 
 ```yaml
 npm:
@@ -56,14 +54,14 @@ npm:
 
 **Groups:** Nornir groups are created using the *groups* list of dictionaries with group membership based around the device attribute *MachineTypes*.
 
--Group: Name of the group
--type: Host data dictionary to represent the device type for this group (router, switch, etc), it replaces MachineType
--filter: A list of upto two filter objects (*and* logic) to match against *SELECT MachineTypes*
--scrapli: Optional 3rd party connection driver added to connection_options (platform)
--netmiko: Optional  3rd party connection driver added to connection_options (platform)
--napalm: Optional  3rd party connection driver added to connection_options (platform)
+- *Group*: Name of the group
+- *type*: Host data dictionary to represent the device type for this group (router, switch, etc), it replaces MachineType
+- *filter*: A list of upto two filter objects (and logic) to match against SELECT MachineTypes
+- *scrapli*: Optional 3rd party connection driver added to connection_options (platform)
+- *netmiko*: Optional  3rd party connection driver added to connection_options (platform)
+- *napalm*: Optional  3rd party connection driver added to connection_options (platform)
 
-This will create groups for *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc* and *checkpoint* with a custom *type* host_var and the *platform* set for any connection drivers defined.
+Will create the groups *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc* and *checkpoint* with a *type* host_var and the *platform* set for any connection drivers defined.
 
 ```yaml
 groups:
@@ -101,7 +99,7 @@ groups:
 
 ## Installation and Prerequisites
 
-Create your project, clone *nornir_orion* to the root of it and install the dependencies (mainly *nornir*, *orionsdk* and *rich*)/
+Create your project, clone *nornir_orion* to its root and install the dependencies (*nornir*, *orionsdk*, *rich* etc).
 
 ```python
 mkdir my_new_project
@@ -114,14 +112,15 @@ pip install -r nornir_orion/requirements.txt
 
 ## Using the Inventory
 
-Below is a bare minimum of what is required to use orion as your inventory with runtime filtering. The only mandatory argument is the inventory settings which holds all the NPM details, will be prompted for passwords at runtime (if not set in inventory settings).
+To use the inventory it needs importing and the *main* function called with the inventory settings. By default this will return the initialized nornir inventory ready to use.
 
 ```python
 from nornir_orion import orion_inv
+
 nr = orion_inv.main("inv_settings.yml")
 ```
 
-It is also possible to add the True argument which will use a static inventory instead of Orion (looks for *hosts.yml* and *groups.yml* in */inventory*).
+It is possible to add a 2nd argument of True to the *main* function to force it to use static inventory instead of Orion (looks for *hosts.yml* and *groups.yml* in */inventory*).
 
 ```python
 nr = orion_inv.main("inv_settings.yml", True)
@@ -129,33 +128,32 @@ nr = orion_inv.main("inv_settings.yml", True)
 
 ### Runtime flags
 
-The following flags can be used to override the npm and device username specified in the inventory settings (*inv_settings.yml*).
+The *npm* and *device* usernames specified in the inventory settings (*inv_settings.yml*) can be overridden at runtime.
 
 | flag           | Description |
 | -------------- | ----------- |
-| -nu or --npm_user | Overrides the value set in *npm.user* variable |
-| -du or --device_user | Overrides the value set in *device.user* variable |
+| `-nu` or `--npm_user` | Overrides the value set by *npm.user* |
+| `-du` or `--device_user` | Overrides the value set by *device.user* |
 
-Runtime filters (flags) can be used in any combination to filter the hosts in the inventory that the tasks will be run against. Filters are sequential so the ordering is of importance. For example, the second filter will only be run against hosts that have already matched the first filter. Words separate by special characters or whitespaces will need to be encased in brackets.
+Runtime filters (flags) can be used in any combination to filter the inventory hosts that the tasks will be run against. Filters are sequential so the ordering is of importance. For example, a 2nd filter will only be run against hosts that have already matched the 1st filter. Words separate by special characters or whitespace need to be encased in brackets.
 
 | filter            | method   | Options |
 | ------------------| -------- | ------- |
-| -h or --hostname  | contains | * |
-| -g or --group     | any      | ios, iosxe, nxos, wlc, asa (includes ftd), checkpoint |
-| -l or --location  | any      | DC1, DC2, DCI (Overlay), ET, FG |
-| -ll or --logical  | any      | WAN, WAN Edge, Core, Access, Services |
-| -t  or --type     | any      | firewall, router, dc_switch, switch, wifi_controller |
-| -v  or --version  | contains | * |
+| `-h` or `--hostname`  | contains | * |
+| `-g` or `--group`     | any      | ios, iosxe, nxos, wlc, asa (includes ftd), checkpoint |
+| `-l` or `--location`  | any      | DC1, DC2, DCI (Overlay), ET, FG |
+| `-ll` or `--logical`  | any      | WAN, WAN Edge, Core, Access, Services |
+| `-t`  or `--type`     | any      | firewall, router, dc_switch, switch, wifi_controller |
+| `-v`  or `--version`  | contains | * |
 
-These additional flags can be used to help with the forming of filters by displaying what hosts the filtered inventory will hold. If either of these are defined no actual inventory object is returned, so it prints the inventory and exits.
+The *show* and *show_detail* flags can be used to help with the forming of filters by displaying what hosts the filtered inventory holds. If either of these are defined no actual inventory object is returned, so it prints the inventory and exits.
 
 | flag | Description |
 | ---- | ----------- |
-| -s or --show | Prints all the hosts within the inventory |
-| -sd or --show_detail | Prints all the hosts within the inventory including their host_vars |
+| `-s` or `--show` | Prints all the hosts within the inventory |
+| `-sd` or `--show_detail` | Prints all the hosts within the inventory including their host_vars |
 
-
-All hosts in groups *ios*\
+All hosts in the groupss *ios*\
 `python example_basic.py -s -g ios`
 
 All hosts in groups *ios* or *iosxe* that have *WAN* in their name\
@@ -168,7 +166,7 @@ All hosts (including host_vars) in group *ios* running version *16.9.6* at locat
 
 ### Adding additional flags to the Inventory
 
-This other example (*example_adv.py*) takes it one step further and adds additional runtime flags to those used by *nornir_orion*. The new class (*NewProject*) gathers the arguments (flags) from *OrionInventory.add_arg_parser* and adds any additional arguments.
+This other example (*example_adv.py*) takes it one step further and adds additional runtime flags to those used by *nornir_orion*. The new class (*NewProject*) gathers the arguments (flags) from *OrionInventory.add_arg_parser* and adds its own additional arguments (*filename* and *apply*).
 
 ```python
 from nornir_orion import orion_inv
@@ -186,7 +184,7 @@ class NewProject:
         return args
 ```
 
-*OrionInventory.main* is copied from *nornir_orion* but instead of calling *OrionInventory.add_arg_parser* directly it calls *NewProject.add_arg_parser*. The rest of the function is the same, with all the arguments parsed and the inventory generated.
+The *OrionInventory.main* method is copied from *nornir_orion* but instead of calling *OrionInventory.add_arg_parser* directly it calls *NewProject.add_arg_parser*. The rest of the function is the same, with all the arguments parsed and the inventory generated.
 
 ```python
 def main(inv_settings: str, no_orion: bool = no_orion):
