@@ -229,22 +229,22 @@ class OrionInventory:
             return npm["pword"]
         except ConnectionError as err:
             self.rc.print(
-                f":x: [red]ConnectionError[/red]: Can not connect to server [#000000 i b]{npm['server']}"
-                "[/#000000 i b], ensure that the address is correct and it is reachable"
+                f":x: [red]ConnectionError[/red]: Cannot connect to server [i b]{npm['server']}"
+                "[/i b], ensure that the address is correct and it is reachable"
             )
             self.rc.print(err)
             sys.exit(1)
         except HTTPError as err:
             self.rc.print(
-                f":x: [red]HTTPError[/red]: Can not connect to [#000000 i b]{npm['server']}[/#000000 i b]"
-                f"with [#000000 i b]{npm['user']}[/#000000 i b], check username/password are correct"
+                f":x: [red]HTTPError[/red]: Cannot connect to [i b]{npm['server']}[/i b] "
+                f"with username [i b]{npm['user']}[/i b], check username/password are correct"
             )
             self.rc.print(err)
             sys.exit(1)
         except Exception as err:
             self.rc.print(
-                f":x: [red]Error[/red]: Can not connect to [#000000 i b]{npm['server']}[/#000000 i b]"
-                f"with [#000000 i b]{npm['user']}[/#000000 i b]"
+                f":x: [red]Error[/red]: Cannot connect to [i b]{npm['server']}[/i b]"
+                f"with [i b]{npm['user']}[/i b]"
             )
             self.rc.print(err)
             sys.exit(1)
@@ -258,22 +258,21 @@ class OrionInventory:
         InventoryPluginRegister.register("orion_npm", OrionNpmInventory)
         nr: "Nornir" = InitNornir(
             inventory=(
-                dict(plugin="orion_npm"),
-                (
-                    dict(
-                        options=dict(
-                            npm_server=self.npm["server"],
-                            npm_user=self.npm["user"],
-                            npm_pword=self.npm["pword"],
-                            npm_select=self.npm["select"],
-                            npm_where=self.npm["where"],
-                            ssl_verify=self.npm["ssl_verify"],
-                            all_groups=self.groups,
-                        )
-                    )
-                ),
+                dict(
+                    plugin="orion_npm",
+                    options=dict(
+                        npm_server=npm["server"],
+                        npm_user=npm["user"],
+                        npm_pword=npm["pword"],
+                        npm_select=npm["select"],
+                        npm_where=npm["where"],
+                        ssl_verify=npm["ssl_verify"],
+                        all_groups=groups,
+                    ),
+                )
             )
         )
+
         return nr
 
     # TEST_LOAD_INV: Creates inventory from static files, used by pytest and to test with no orion
@@ -319,7 +318,7 @@ class OrionInventory:
             )
             for each_host, data in nr.inventory.hosts.items():
                 self.rc.print(
-                    f"[green]-Host: {each_host} [/green]\t  [i]-Hostname: {data.hostname}[/i]"
+                    f"[green]-Host: {each_host} [/green]     [i]-Hostname: {data.hostname}[/i]"
                 )
             sys.exit(0)
         elif args.get("show_detail", False) == True:
@@ -332,7 +331,7 @@ class OrionInventory:
                 for each_key, each_val in data.data.items():
                     tmp_data.append(each_key + ": " + each_val)
                 self.rc.print(
-                    f"[green]-Host: {each_host}[/green]\t- [i]Hostname: {data.hostname}, Groups: {', '.join(data.dict()['groups'])}, "
+                    f"[green]-Host: {each_host}[/green]   -   [i]Hostname: {data.hostname}, Groups: {', '.join(data.dict()['groups'])}, "
                     f"{', '.join(tmp_data)}[/i]"
                 )
             sys.exit(0)

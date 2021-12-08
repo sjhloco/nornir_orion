@@ -66,7 +66,7 @@ class OrionNpmInventory:
         self,
         npm_server: Optional[str] = None,
         npm_user: Optional[str] = None,
-        npm_password: Optional[str] = None,
+        npm_pword: Optional[str] = None,
         npm_select: Optional[list[str]] = [],
         npm_where: Optional[str] = None,
         ssl_verify: Union[bool, str] = True,
@@ -80,7 +80,7 @@ class OrionNpmInventory:
 
         self.npm_server = npm_server
         self.npm_user = npm_user
-        self.npm_password = npm_password
+        self.npm_pword = npm_pword
         self.npm_select = npm_select
         self.npm_where = npm_where
         self.ssl_verify = ssl_verify
@@ -92,10 +92,10 @@ class OrionNpmInventory:
     # 1. VERIFY: Notify the user if any of the inventory plugin options are missing
     # ----------------------------------------------------------------------------
     def _verify(self) -> bool:
-        for item in [self.npm_server, self.npm_user, self.npm_password]:
+        for item in [self.npm_server, self.npm_user, self.npm_pword]:
             if item is None:
                 raise ValueError(
-                    "Plugin options 'server', 'username' or 'password' are missing, all are required to connect to Orion"
+                    "Plugin options 'server', 'user' or 'pword' are missing, all are required to connect to Orion"
                 )
         for item in [self.npm_where]:
             if item is None:
@@ -115,13 +115,13 @@ class OrionNpmInventory:
         if "Caption" in self.npm_select:
             self.npm_select.remove("Caption")
         if "IPAddress" in self.npm_select:
-            self.npm_select.append("IPAddress")
+            self.npm_select.remove("IPAddress")
         if "MachineType" in self.npm_select:
-            self.npm_select.append("MachineType")
+            self.npm_select.remove("MachineType")
         if len(self.npm_select) != 0:
             tmp_npm_select = ", " + ", ".join(self.npm_select)
         # 2c. Creates Orion connection and attempts to get the data using user input options
-        conn = SwisClient(self.npm_server, self.npm_user, self.npm_password)
+        conn = SwisClient(self.npm_server, self.npm_user, self.npm_pword)
         api_query = (
             "SELECT Caption, IPAddress, MachineType"
             + tmp_npm_select
@@ -137,9 +137,6 @@ class OrionNpmInventory:
     def set_type_and_groups(self, each_device: dict, host_attributes: dict) -> dict:
         for each_grp in self.all_groups:
             # Stops errors when fed in filter has only 1 value (like filter=["ASA", None])
-            # if each_grp["filter"][1] == None:
-            #     each_grp["filter"][1] = each_grp["filter"][0]
-            #### !!!!! Added to give it a default value if not entered, needs testing
             if len(each_grp["filter"]) == 1:
                 each_grp["filter"].append(each_grp["filter"][0])
             # 3a. CREATE: Create groups dict and device type for any matching all_groups filters

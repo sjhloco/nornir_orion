@@ -40,7 +40,7 @@ groups:
     netmiko: cisco_asa_ssh,
   - group: checkpoint
     type: firewall
-    filter: [Checkpoint]
+    filter: [CheckPoint]
     netmiko: checkpoint_gaia_ssh
 # Device username
 device:
