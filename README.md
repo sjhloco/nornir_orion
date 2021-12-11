@@ -23,15 +23,15 @@ The inventory settings comprises of three parent dictionaries (***npm***, ***gro
 
 | Parent | Variable | Type | Description |
 | --- | -------- | -----| ----------- |
-| npm | server | `string` | IP or hostname of the Orion NPM server devices are gathered from
-| npm | user | `string` | Username for orion, can be overridden at runtime using `-nu`
-| npm | pword | `string` | Optional Orion password, if not set is prompted for at runtime
-| npm | ssl_verify | `boolean` | Disables CA certificate validation warnings
-| npm | select | `list` | Device attributes added to the nornir inventory (can be empty list)
-| npm | where | `string` | Filter to define which Orion nodes to gather attributes from
+| npm | `server` | `string` | IP or hostname of the Orion NPM server devices are gathered from
+| npm | `user` | `string` | Username for orion, can be overridden at runtime using `-nu`
+| npm | `pword` | `string` | Optional Orion password, if not set is prompted for at runtime
+| npm | `ssl_verify` | `boolean` | Disables CA certificate validation warnings
+| npm | `select` | `list` | Device attributes added to the nornir inventory (can be empty list)
+| npm | `where` | `string` | Filter to define which Orion nodes to gather attributes from
 | groups | n/a | `list` | List of groups and filters that decide the group membership
-| device | user | `string` | Nornir inventory device usernames, same across all (runtime `-du`)
-| device | pword | `string` | Optional password for all devices, if not set prompted for at runtime
+| device | `user` | `string` | Nornir inventory device usernames, same across all (runtime `-du`)
+| device | `pword` | `string` | Optional password for all devices, if not set prompted for at runtime
 
 The preferable password method is to enter them at runtime when prompted, if set manually password prompts are disabled. The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
 
@@ -141,8 +141,8 @@ Runtime filters (flags) can be used in any combination to filter the inventory h
 | ------------------| -------- | ------- |
 | `-h` or `--hostname`  | contains | * |
 | `-g` or `--group`     | any      | ios, iosxe, nxos, wlc, asa (includes ftd), checkpoint |
-| `-l` or `--location`  | any      | DC1, DC2, DCI (Overlay), ET, FG |
-| `-ll` or `--logical`  | any      | WAN, WAN Edge, Core, Access, Services |
+| `-l` or `--location`  | any      | Values got from *Nodes.CustomProperties.Infra_Location* |
+| `-ll` or `--logical`  | any      | Values got from *Nodes.CustomProperties.Infra_Logical_Location* |
 | `-t`  or `--type`     | any      | firewall, router, dc_switch, switch, wifi_controller |
 | `-v`  or `--version`  | contains | * |
 
