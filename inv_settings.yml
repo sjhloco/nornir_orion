@@ -37,7 +37,7 @@ groups:
   - group: asa
     type: firewall
     filter: [ASA]
-    netmiko: cisco_asa_ssh,
+    netmiko: cisco_asa_ssh
   - group: checkpoint
     type: firewall
     filter: [CheckPoint]
