@@ -22,7 +22,7 @@ groups:
     type: router
     filter: [ASR, CSR]
     naplam: ios
-    netmiko: cisco_iosxe
+    netmiko: cisco_xe
     scrapli: cisco_iosxe
   - group: nxos
     type: dc_switch
