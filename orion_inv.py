@@ -297,16 +297,16 @@ class OrionInventory:
             nr = nr.filter(F(groups__any=args["group"]))
             filters.extend(args["group"])
         if args.get("location") != None:
-            nr = nr.filter(F(Infra_Location__any=args["location"]))
+            nr = nr.filter(F(infra_location__any=args["location"]))
             filters.extend(args["location"])
         if args.get("logical") != None:
-            nr = nr.filter(F(Infra_Logical_Location__any=args["logical"]))
+            nr = nr.filter(F(infra_logical_location__any=args["logical"]))
             filters.extend(args["logical"])
         if args.get("type") != None:
             nr = nr.filter(F(type__any=args["type"]))
             filters.extend(args["type"])
         if args.get("version") != None:
-            nr = nr.filter(F(IOSVersion__contains=args["version"]))
+            nr = nr.filter(F(iosversion__contains=args["version"]))
             filters.append(args["version"])
 
         # Print and exit if show or show_detail flags set
