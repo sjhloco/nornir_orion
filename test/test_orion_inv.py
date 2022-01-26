@@ -99,60 +99,118 @@ class TestLoadValInventorySettings:
 # 2. FILTER: Checks filtering of Nornir inventory with runtime args
 # ----------------------------------------------------------------------------
 class TestFilterInventory:
-    # 2a. Tests each filter one at a time
-    def test_each_filter(self):
-        error_input = dict(
-            hostname=("WAN", ["HME-ASR-WAN01", "DC-ASR-WAN01", "AZ-ASR-WAN01"]),
-            group=(["wlc", "nxos"], ["HME-WLC-AIR01", "DC-N9K-SWI01"]),
-            location=(
-                ["AZ"],
-                ["AZ-ASR-WAN01", "AZ-FPR-FTD01", "AZ-ASA-VPN01", "AZ-UBT-SVR01"],
-            ),
-            logical=(
-                ["Core", "Compute"],
-                [
-                    "HME-SWI-VSS01",
-                    "HME-UBT-SVR01",
-                    "DC-N9K-SWI01",
-                    "DC-UBT-SVR01",
-                    "AZ-UBT-SVR01",
-                ],
-            ),
-            type=(["dc_switch"], ["DC-N9K-SWI01"]),
-            version=("6.3.0", ["AZ-FPR-FTD01"]),
-            no_filter=(
-                "",
-                [
-                    "HME-ASR-WAN01",
-                    "HME-SWI-VSS01",
-                    "HME-WLC-AIR01",
-                    "HME-SWI-ACC01",
-                    "HME-UBT-SVR01",
-                    "DC-ASR-XNET01",
-                    "DC-ASA-XNET01",
-                    "DC-ASR-WAN01",
-                    "DC-N9K-SWI01",
-                    "DC-9300-SWI01",
-                    "DC-UBT-SVR01",
-                    "AZ-ASR-WAN01",
-                    "AZ-FPR-FTD01",
-                    "AZ-ASA-VPN01",
-                    "AZ-UBT-SVR01",
-                ],
-            ),
-        )
-        for fltr_type, compare in error_input.items():
-            err_msg = (
-                f"❌ filter_inventory: '{fltr_type}' runtime inventory filter failed"
-            )
-            actual_result = []
-            args = {fltr_type: compare[0]}
-            tmp_actual_desired_result = orion.filter_inventory(args, nr_inv)
-            for each_host in tmp_actual_desired_result.inventory.hosts.keys():
-                actual_result.append(each_host)
-            assert actual_result == compare[1], err_msg
+    # 2a. Tests hostname filter one at a time
+    def test_hostname_filter(self):
+        args = dict(hostname="WAN ASA")
+        desired_result = [
+            "HME-ASR-WAN01",
+            "DC-ASA-XNET01",
+            "DC-ASR-WAN01",
+            "AZ-ASR-WAN01",
+            "AZ-ASA-VPN01",
+        ]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
 
-    # 2b. Tests all filters at the same time
+    # 2b. Tests group filter one at a time
+    def test_group_filter(self):
+        args = dict(group=["wlc", "nxos"])
+        desired_result = ["HME-WLC-AIR01", "DC-N9K-SWI01"]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2c. Tests location filter one at a time
+    def test_location_filter(self):
+        args = dict(location=["AZ"])
+        desired_result = [
+            "AZ-ASR-WAN01",
+            "AZ-FPR-FTD01",
+            "AZ-ASA-VPN01",
+            "AZ-UBT-SVR01",
+        ]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2d. Tests logical filter one at a time
+    def test_logical_filter(self):
+        args = dict(logical=["Core", "Compute"])
+        desired_result = [
+            "HME-SWI-VSS01",
+            "HME-UBT-SVR01",
+            "DC-N9K-SWI01",
+            "DC-UBT-SVR01",
+            "AZ-UBT-SVR01",
+        ]
+
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2e. Tests type filter one at a time
+    def test_type_filter(self):
+        args = dict(type=["dc_switch"])
+        desired_result = ["DC-N9K-SWI01"]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2f. Tests version filter one at a time
+    def test_version_filter(self):
+        args = dict(version="6.3.0")
+        desired_result = ["AZ-FPR-FTD01"]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2g. Tests no filter one at a time
+    def test_no_filter(self):
+        args = dict(no_filter="")
+        desired_result = [
+            "HME-ASR-WAN01",
+            "HME-SWI-VSS01",
+            "HME-WLC-AIR01",
+            "HME-SWI-ACC01",
+            "HME-UBT-SVR01",
+            "DC-ASR-XNET01",
+            "DC-ASA-XNET01",
+            "DC-ASR-WAN01",
+            "DC-N9K-SWI01",
+            "DC-9300-SWI01",
+            "DC-UBT-SVR01",
+            "AZ-ASR-WAN01",
+            "AZ-FPR-FTD01",
+            "AZ-ASA-VPN01",
+            "AZ-UBT-SVR01",
+        ]
+        err_msg = f"❌ filter_inventory: '{list(args.keys())[0]}' runtime inventory filter failed"
+        actual_result = []
+        tmp_actual_result = orion.filter_inventory(args, nr_inv)
+        for each_host in tmp_actual_result.inventory.hosts.keys():
+            actual_result.append(each_host)
+        assert actual_result == desired_result, err_msg
+
+    # 2h. Tests all filters at the same time
     def test_all_filters(self):
         err_msg = "❌ filter_inventory: 'xxx' runtime inventory filter failed"
         args = dict(
@@ -168,7 +226,7 @@ class TestFilterInventory:
             == "{'DC-ASR-XNET01': Host: DC-ASR-XNET01}"
         ), err_msg
 
-    ## 2c. Tests printed output
+    ## 2i. Tests printed output
     def test_show_output(self, capsys):
         err_msg = "❌ filter_inventory: 'show' output of inventory filter failed"
         args = dict(filename="dummy_file", hostname="XNET", show=True)
@@ -184,14 +242,14 @@ class TestFilterInventory:
             pass
         assert capsys.readouterr().out == desired_result, err_msg
 
-    # 2d. Tests printed detailed output
+    # 2j. Tests printed detailed output
     def test_show_detail_output(self, capsys):
         err_msg = "❌ filter_inventory: 'show_detail' output of inventory filter failed"
         args = dict(filename="dummy_file", hostname="AZ-ASA-VPN01", show_detail=True)
         desired_result = (
             "=" * 70
-            + "\n1 hosts have matched the filters 'AZ-ASA-VPN01':\n-Host: AZ-ASA-VPN01     "
-            "- Hostname: 10.30.20.101, Groups: asa, \nInfra_Logical_Location: Services, "
+            + "\n1 hosts have matched the filters 'AZ-ASA-VPN01':\n-Host: AZ-ASA-VPN01   "
+            "-   Hostname: 10.30.20.101, Groups: asa, \nInfra_Logical_Location: Services, "
             "MachineType: Cisco ASAv, IOSVersion: \n9.12(4)13, Infra_Location: AZ, type: firewall\n"
         )
         try:

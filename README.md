@@ -139,7 +139,7 @@ Runtime filters (flags) can be used in any combination to filter the inventory h
 
 | filter            | method   | Options |
 | ------------------| -------- | ------- |
-| `-n` or `--hostname`  | contains | * |
+| `-n` or `--hostname`  | contains | * (uses OR logic with upto 10 host names encased in "" separated by space |
 | `-g` or `--group`     | any      | ios, iosxe, nxos, wlc, asa (includes ftd), checkpoint |
 | `-l` or `--location`  | any      | Values got from *Nodes.CustomProperties.Infra_Location* |
 | `-ll` or `--logical`  | any      | Values got from *Nodes.CustomProperties.Infra_Logical_Location* |

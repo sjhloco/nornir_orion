@@ -181,7 +181,7 @@ class OrionNpmInventory:
             # Creates data dictionary
             for each_obj in self.npm_select:
                 tmp_obj = each_obj.split(".")[-1]
-                host_attributes["data"][tmp_obj.lower()] = each_device[tmp_obj]
+                host_attributes["data"][tmp_obj] = each_device[tmp_obj]
             # Create each inventory host by passing data through function
             hosts[each_device["Caption"]] = _get_inventory_element(
                 Host, host_attributes, each_device["Caption"], defaults
