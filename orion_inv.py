@@ -3,6 +3,7 @@ import argparse
 import sys
 import getpass
 import yaml
+import os
 
 from rich.console import Console
 from rich.theme import Theme
@@ -40,11 +41,23 @@ class LoadValInventorySettings:
         with open(filename) as f:
             inv_settings = yaml.load(f, Loader=yaml.SafeLoader)
 
-        # If npm or device username set at runtime adds them to the inventory settings
+        # If npm or device username set in env vars or at runtime adds them to the inventory settings
+        if os.environ.get("NPM_SERVER") != None:
+            inv_settings["npm"]["server"] = os.environ["NPM_SERVER"]
+
         if args.get("npm_user") != None:
             inv_settings["npm"]["user"] = args["npm_user"]
+        elif os.environ.get("NPM_USERNAME") != None:
+            inv_settings["npm"]["user"] = os.environ["NPM_USERNAME"]
+        if os.environ.get("NPM_PASSWORD") != None:
+            inv_settings["npm"]["pword"] = os.environ["NPM_PASSWORD"]
+
         if args.get("device_user") != None:
             inv_settings["device"]["user"] = args["device_user"]
+        elif os.environ.get("DEVICE_USERNAME") != None:
+            inv_settings["device"]["user"] = os.environ["DEVICE_USERNAME"]
+        if os.environ.get("DEVICE_PASSWORD") != None:
+            inv_settings["device"]["pword"] = os.environ["DEVICE_PASSWORD"]
 
         # Run test engine, exit or continue based on test engine result
         self.testing_engine(inv_settings)
@@ -70,7 +83,7 @@ class LoadValInventorySettings:
                 self.rc.print(
                     f":x: {setting_type.upper()}: Missing this mandatory parent dictionary"
                 )
-            # 2b. If the parent dictionaires exist test child dictionaries:
+            # 2b. If the parent dictionaries exist test child dictionaries:
             else:
                 # If Groups iterate through list of groups calling test method to test group child dictionaries
                 if setting_type == "groups":
@@ -307,9 +320,6 @@ class OrionInventory:
                 | F(name__contains=list_hosts[9])
             )
             filters.append(args["hostname"])
-        # if args.get("hostname") != None:
-        #     nr = nr.filter(F(name__contains=args["hostname"]))
-        #     filters.append(args["hostname"])
         if args.get("group") != None:
             nr = nr.filter(F(groups__any=args["group"]))
             filters.extend(args["group"])
@@ -346,6 +356,8 @@ class OrionInventory:
             for each_host, data in nr.inventory.hosts.items():
                 tmp_data = []
                 for each_key, each_val in data.data.items():
+                    if each_val == None:
+                        each_val = "unknown"
                     tmp_data.append(each_key + ": " + each_val)
                 self.rc.print(
                     f"[green]-Host: {each_host}[/green]   -   [i]Hostname: {data.hostname}, Groups: {', '.join(data.dict()['groups'])}, "
@@ -385,11 +397,16 @@ def main(inv_settings: str, no_orion: bool = no_orion):
         orion.test_npm_creds(inv_settings["npm"])
         # 3b. Initialise Nornir inventory
         nr_inv = orion.load_inventory(inv_settings["npm"], inv_settings["groups"])
-    # 3c. Uses static inventory instead of Orion
+    # 3c. Uses static inventory instead of Orion (first checks locally, if not exist uses nornir_orion static inv)
     elif no_orion == True:
-        nr_inv = orion.load_static_inventory(
-            "inventory/hosts.yml", "inventory/groups.yml"
-        )
+        if os.path.exists("inventory"):
+            nr_inv = orion.load_static_inventory(
+                "inventory/hosts.yml", "inventory/groups.yml"
+            )
+        else:
+            nr_inv = orion.load_static_inventory(
+                "nornir_orion/inventory/hosts.yml", "nornir_orion/inventory/groups.yml"
+            )
 
     # 4. Filter the inventory based on the runtime flags
     nr_inv = orion.filter_inventory(args, nr_inv)

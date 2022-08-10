@@ -23,17 +23,15 @@ The inventory settings comprises of three parent dictionaries (***npm***, ***gro
 
 | Parent | Variable | Type | Description |
 | --- | -------- | -----| ----------- |
-| npm | `server` | `string` | IP or hostname of the Orion NPM server devices are gathered from
-| npm | `user` | `string` | Username for orion, can be overridden at runtime using `-nu`
-| npm | `pword` | `string` | Optional Orion password, if not set is prompted for at runtime
+| npm | `server` | `string` | IP of the Orion NPM server, can be overridden with env var
+| npm | `user` | `string` | Username for orion, can be overridden with env var or at runtime
 | npm | `ssl_verify` | `boolean` | Disables CA certificate validation warnings
 | npm | `select` | `list` | Device attributes added to the nornir inventory (can be empty list)
 | npm | `where` | `string` | Filter to define which Orion nodes to gather attributes from
 | groups | n/a | `list` | List of groups and filters that decide the group membership
-| device | `user` | `string` | Nornir inventory device usernames, same across all (runtime `-du`)
-| device | `pword` | `string` | Optional password for all devices, if not set prompted for at runtime
+| device | `user` | `string` | Nornir inventory device usernames, can be overridden with env var or at runtime
 
-The preferable password method is to enter them at runtime when prompted, if set manually password prompts are disabled. The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
+The default inventory settings file (*inv_settings.yml*) has the following SWQL values and resulting logic.
 
 **Filter (WHERE):** Gather device attributes for Cisco and Checkpoint devices (*Vendor*) that are up (*1*).
 
@@ -56,12 +54,12 @@ npm:
 
 - *Group*: Name of the group
 - *type*: Host data dict to represent the device type for this group (router, switch, etc), replaces MachineType
-- *filter*: A list of upto two filter objects (and logic) to match against SELECT MachineTypes
+- *filter*: A list of upto two filter objects (and logic) to match against SELECT MachineTypes to dictate group membership. If doesn't match on MachineTypes it will tray against Caption (name), if still no match adds to the group *unknown*
 - *scrapli*: Optional 3rd party connection driver added to connection_options (platform)
 - *netmiko*: Optional  3rd party connection driver added to connection_options (platform)
 - *napalm*: Optional  3rd party connection driver added to connection_options (platform)
 
-Will create the groups *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc* and *checkpoint* with a *type* host_var and the *platform* set for any connection drivers defined.
+This will create the groups *ios*, *iosxe*, *nxos*, *wlc*, *asa*, *wlc*, *palo* and *checkpoint* with a *type* host_var and the *platform* set for any connection drivers defined.
 
 ```yaml
 groups:
@@ -83,6 +81,13 @@ groups:
     naplam: nxos_ssh
     netmiko: cisco_nxos_ssh
     scrapli: cisco_nxos
+  - group: sdwan
+    type: router
+    # Matches on name as machine type is just Cisco (typical!!!!)
+    filter: [SDW]
+    naplam: ios
+    netmiko: cisco_xe
+    scrapli: cisco_iosxe
   - group: wlc
     type: wifi_controller
     filter: [WLC]
@@ -95,6 +100,10 @@ groups:
     type: firewall
     filter: [Checkpoint]
     netmiko: checkpoint_gaia_ssh
+  - group: palo
+    type: firewall
+    filter: [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]
+    netmiko: paloalto_panos
  ```
 
 ## Installation and Prerequisites
@@ -110,9 +119,27 @@ source ~/venv/new_project/bin/activate
 pip install -r nornir_orion/requirements.txt
 ```
 
+## Environment Variables
+
+The Orion NPM and device credentials can be set via environment variables rather than at runtime.
+
+- `NPM_SERVER`
+- `NPM_USERNAME`
+- `NPM_PASSWORD`
+- `DEVICE_USERNAME`
+- `DEVICE_PASSWORD`
+
+The below table shows how to add a temporary environment variable, they only last until the terminal session is closed.
+
+| OS | Show all environment variables | Add an environment variables |
+|----| ----------------- | -------------- |
+| Mac | `printenv` | `export variable_name=variable_value` |
+| Windows cmd | `set` | `set variable_name=variable_value` |
+| Windows powershell | `ls env:` | `$env:variable_name = "variable_value"` |
+
 ## Using the Inventory
 
-To use the inventory it needs importing and the *main* function called with the inventory settings. By default this will return the initialized nornir inventory ready to use.
+To use the inventory it needs importing and the *main* function called with the inventory settings. This will return the initialized nornir inventory ready to use.
 
 ```python
 from nornir_orion import orion_inv
@@ -120,7 +147,7 @@ from nornir_orion import orion_inv
 nr = orion_inv.main("inv_settings.yml")
 ```
 
-It is possible to add a 2nd argument of True to the *main* function to force it to use static inventory instead of Orion (looks for *hosts.yml* and *groups.yml* in */inventory*).
+It is possible to add a 2nd argument of *True* to the *main* function to force it to use static inventory instead of Orion. It looks for *hosts.yml* and *groups.yml* in */inventory*, if */inventory* doesn't exists it uses the files from */nornir_orion/inventory*.
 
 ```python
 nr = orion_inv.main("inv_settings.yml", True)
@@ -128,12 +155,12 @@ nr = orion_inv.main("inv_settings.yml", True)
 
 ### Runtime flags
 
-The *npm* and *device* usernames specified in the inventory settings (*inv_settings.yml*) can be overridden at runtime.
+The *npm* and *device* usernames specified in the inventory settings (*inv_settings.yml*) or environment variables can be overridden at runtime.
 
 | flag           | Description |
 | -------------- | ----------- |
-| `-nu` or `--npm_user` | Overrides the value set by *npm.user* |
-| `-du` or `--device_user` | Overrides the value set by *device.user* |
+| `-nu` or `--npm_user` | Overrides the value set by *NPM_USERNAME* and/or *npm.user* |
+| `-du` or `--device_user` | Overrides the value set by *DEVICE_USERNAME* and/or *device.user* |
 
 Runtime filters (flags) can be used in any combination to filter the inventory hosts that the tasks will be run against. Filters are sequential so the ordering is of importance. For example, a 2nd filter will only be run against hosts that have already matched the 1st filter. Words separate by special characters or whitespace need to be encased in brackets.
 
@@ -153,7 +180,7 @@ The *show* and *show_detail* flags can be used to help with the forming of filte
 | `-s` or `--show` | Prints all the hosts within the inventory |
 | `-sd` or `--show_detail` | Prints all the hosts within the inventory including their host_vars |
 
-All hosts in the groupss *ios*\
+All hosts in the groups *ios*\
 `python example_basic.py -s -g ios`
 
 All hosts in groups *ios* or *iosxe* that have *WAN* in their name\

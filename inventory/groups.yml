@@ -7,6 +7,14 @@ ios:
       platform: ios
     scrapli:
       platform: cisco_iosxe
+iosxe:
+  connection_options:
+    napalm:
+      platform: ios
+    netmiko:
+      platform: cisco_xe
+    scrapli:
+      platform: cisco_iosxe
 nxos:
   connection_options:
     napalm:
@@ -15,7 +23,7 @@ nxos:
       platform: cisco_nxos_ssh
     scrapli:
       platform: cisco_nxos
-iosxe:
+sdwan:
   connection_options:
     napalm:
       platform: ios
@@ -35,5 +43,9 @@ checkpoint:
   connection_options:
     netmiko:
       platform: checkpoint_gaia_ssh
+palo:
+  connection_options:
+    netmiko:
+      platform: paloalto_panos
 ftd: {}
 unknown: {}

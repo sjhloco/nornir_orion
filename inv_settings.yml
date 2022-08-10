@@ -2,7 +2,6 @@
 npm:
   server: orion-svr01
   user: test_user
-  # pword: xxxx
   ssl_verify: False
   select:
     - Nodes.CustomProperties.Infra_Logical_Location
@@ -10,7 +9,11 @@ npm:
     - Nodes.CustomProperties.Infra_Location
   where: (Vendor = 'Cisco' or Vendor ='Check Point Software Technologies Ltd') and Nodes.Status = 1
 
-# Filters fed into NPM  Nornir inventory plugin to create the groups
+# Device username
+device:
+  user: test_user1
+
+# Filters fed into NPM Nornir inventory plugin to create the groups
 groups:
   - group: ios
     type: switch
@@ -30,6 +33,13 @@ groups:
     naplam: nxos_ssh
     netmiko: cisco_nxos_ssh
     scrapli: cisco_nxos
+  - group: sdwan
+    type: router
+    # Matches on name as machine type is just Cisco (typical!!!!)
+    filter: [SDW]
+    naplam: ios
+    netmiko: cisco_xe
+    scrapli: cisco_iosxe
   - group: wlc
     type: wifi_controller
     filter: [WLC]
@@ -42,7 +52,7 @@ groups:
     type: firewall
     filter: [CheckPoint]
     netmiko: checkpoint_gaia_ssh
-# Device username
-device:
-  user: test_user1
-  # pword: xxxx
+  # - group: palo
+  #   type: firewall
+  #   filter: [XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX]
+  #   netmiko: paloalto_panos

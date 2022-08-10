@@ -141,10 +141,15 @@ class OrionNpmInventory:
                 each_grp["filter"].append(each_grp["filter"][0])
             # 3a. CREATE: Create groups dict and device type for any matching all_groups filters
             filter_obj = each_device.get("MachineType", "")
+            dvc_name = each_device.get("Caption", "")
             if (
                 each_grp["filter"][0] in filter_obj
                 or each_grp["filter"][1] in filter_obj
             ):
+                host_attributes["data"]["type"] = each_grp["type"]
+                host_attributes["groups"] = [each_grp["group"]]
+            # If cant match on name type match on device name
+            elif each_grp["filter"][0] in dvc_name or each_grp["filter"][1] in dvc_name:
                 host_attributes["data"]["type"] = each_grp["type"]
                 host_attributes["groups"] = [each_grp["group"]]
         # 3b. CATCH-ALL: Anything undefined such as cubes or prime
