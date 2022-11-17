@@ -37,6 +37,7 @@ netutils==1.2.0
 nornir==3.3.0
 nornir-jinja2==0.2.0
 nornir-netmiko==0.2.0
+nornir-rich==0.1.5
 nornir-utils==0.2.0
 ntc-templates==3.0.0
 orionsdk==0.3.0

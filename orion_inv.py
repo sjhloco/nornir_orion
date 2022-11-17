@@ -15,6 +15,7 @@ from requests.packages import urllib3
 from nornir.core.plugins.inventory import InventoryPluginRegister
 from nornir import InitNornir
 from nornir.core.filter import F
+from nornir_rich.functions import print_inventory
 
 # Needed so can find inventory plugin when is import into another script
 sys.path.insert(0, "nornir_orion")
@@ -345,7 +346,7 @@ class OrionInventory:
             )
             for each_host, data in nr.inventory.hosts.items():
                 self.rc.print(
-                    f"[green]-Host: {each_host} [/green]     [i]-Hostname: {data.hostname}[/i]"
+                    f"[green]-Host: {each_host}[/green]\t[red]=[/red]  Hostname: {data.hostname}"
                 )
             sys.exit(0)
         elif args.get("show_detail", False) == True:
@@ -353,16 +354,7 @@ class OrionInventory:
             self.rc.print(
                 f"[i cyan]{num_hosts}[/i cyan] hosts have matched the filters [i cyan]'{', '.join(filters)}'[/i cyan]:"
             )
-            for each_host, data in nr.inventory.hosts.items():
-                tmp_data = []
-                for each_key, each_val in data.data.items():
-                    if each_val == None:
-                        each_val = "unknown"
-                    tmp_data.append(each_key + ": " + each_val)
-                self.rc.print(
-                    f"[green]-Host: {each_host}[/green]   -   [i]Hostname: {data.hostname}, Groups: {', '.join(data.dict()['groups'])}, "
-                    f"{', '.join(tmp_data)}[/i]"
-                )
+            print_inventory(nr)
             sys.exit(0)
         else:
             return nr
